@@ -199,15 +199,18 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-python3 ml_model/simulate_dataset.py
-python3 ml_model/train_random_forest.py
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Optional demo dataset for dashboard:
 ```bash
 python3 utils/seed_demo_data.py
 ```
+
+Notes:
+- Default local runtime uses SQLite (`sqlite:///./health_monitoring.db`) for fast startup.
+- To use PostgreSQL, set `DATABASE_URL` in `backend/.env` (example included in `.env.example`).
+- If port `8000` is already in use, run backend on `8010` and update frontend `.env` to `VITE_API_BASE_URL=http://127.0.0.1:8010`.
 
 ### 2) Web Dashboard
 ```bash
@@ -238,6 +241,7 @@ python3 ml_model/simulate_dataset.py
 
 ### RandomForest Training
 ```bash
+pip install -r requirements-ml.txt
 python3 ml_model/train_random_forest.py
 ```
 Outputs:
