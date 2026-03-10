@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: health_monitoring_db
+    environment:
+      POSTGRES_DB: health_monitoring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  backend:
+    build:
+      context: ./backend
+    container_name: health_monitoring_backend
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/health_monitoring
+      SECRET_KEY: super_secret_key_change_me
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:19006"]'
+      MODEL_PATH: ml_model/models/rf_risk_model.joblib
+      METRICS_PATH: ml_model/models/rf_metrics.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend-web:
+    build:
+      context: ./frontend-web
+    container_name: health_monitoring_dashboard
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: health-monitoring-postgres
+spec:
+  serviceName: health-monitoring-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: health-postgres
+  template:
+    metadata:
+      labels:
+        app: health-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: health_monitoring
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: health-monitoring-secrets
+                  key: postgres_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-monitoring-secrets
+                  key: postgres_password
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: health-monitoring-postgres
+spec:
+  selector:
+    app: health-postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-monitoring-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: health-backend
+  template:
+    metadata:
+      labels:
+        app: health-backend
+    spec:
+      containers:
+        - name: backend
+          image: your-registry/health-monitoring-backend:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: health-monitoring-secrets
+                  key: database_url
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: health-monitoring-secrets
+                  key: secret_key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: health-monitoring-backend
+spec:
+  selector:
+    app: health-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
